@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Karz Juice EMS — Live Preview</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1E1512;--surface:#2A1E1B;--surface2:#33221E;--surface3:#3d2820;
+  --orange:#FF9800;--green:#0B6623;--red:#D32F2F;--amber:#F59E0B;
+  --text:#F5F5F5;--muted:#CFC4BC;--dim:#8a7870;
+  --border:rgba(255,255,255,0.07);--card-border:rgba(255,255,255,0.1);
+  --r:10px;--r-sm:6px;
+}
+html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+/* ── Layout ─────────────────────────── */
+#app{display:flex;height:100vh;overflow:hidden}
+/* ── Sidebar ────────────────────────── */
+#sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .2s}
+#sidebar.collapsed{width:52px}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:14px 12px;border-bottom:1px solid var(--border);min-height:52px}
+.sb-badge{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#FF9800,#0B6623);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#fff;flex-shrink:0}
+.sb-title{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden}
+.sb-toggle{background:none;border:none;cursor:pointer;padding:5px;color:var(--muted);border-radius:5px;display:flex;align-items:center;margin-left:auto;flex-shrink:0}
+.sb-toggle:hover{background:rgba(255,255,255,.06)}
+.sb-scroll{flex:1;overflow-y:auto;padding:6px 4px}
+.sb-scroll::-webkit-scrollbar{width:3px}
+.sb-scroll::-webkit-scrollbar-thumb{background:var(--border)}
+.sb-group-label{padding:10px 10px 4px;font-size:9px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;overflow:hidden}
+.sb-item{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--muted);margin-bottom:1px;transition:all .15s;white-space:nowrap;overflow:hidden}
+.sb-item:hover{background:rgba(255,152,0,.08);color:var(--text)}
+.sb-item.active{background:rgba(255,152,0,.15);color:var(--orange);font-weight:600}
+.sb-item svg{flex-shrink:0;width:15px;height:15px}
+.collapsed .sb-group-label,.collapsed .sb-item span{display:none}
+.sb-footer{padding:10px;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px;border-radius:8px}
+.sb-user:hover{background:rgba(255,255,255,.05)}
+.sb-avatar{width:28px;height:28px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--orange);flex-shrink:0}
+/* ── Main ───────────────────────────── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#topbar{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;background:rgba(30,21,18,.95);backdrop-filter:blur(8px);gap:12px}
+#page-label{font-size:12px;color:var(--muted);white-space:nowrap}
+#search-wrap{flex:1;max-width:320px;margin-left:auto}
+.search-btn{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--muted);cursor:pointer;width:100%;transition:border-color .15s}
+.search-btn:hover{border-color:rgba(255,152,0,.3)}
+.search-kbd{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:10px;font-family:monospace}
+#content{flex:1;overflow-y:auto;padding:20px 24px}
+#content::-webkit-scrollbar{width:5px}
+#content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+/* ── Cards / UI ─────────────────────── */
+.card{background:var(--surface);border:1px solid var(--card-border);border-radius:var(--r);padding:16px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:14px;font-weight:600}
+.card-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--card-border);border-radius:var(--r);padding:14px}
+.kpi-label{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:6px}
+.kpi-val{font-size:20px;font-weight:700}
+.kpi-trend{font-size:10px;color:var(--muted);margin-top:3px}
+.orange{color:var(--orange)}.green{color:#4caf50}.red{color:var(--red)}.amber{color:var(--amber)}
+/* ── Buttons ────────────────────────── */
+.btn{border:none;border-radius:var(--r-sm);padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;white-space:nowrap}
+.btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn-primary{background:var(--orange);color:#111}
+.btn-green{background:var(--green);color:#fff}
+.btn-ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border)}
+.btn-danger{background:rgba(211,47,47,.15);color:var(--red);border:1px solid rgba(211,47,47,.3)}
+.btn-sm{padding:5px 10px;font-size:11px}
+/* ── Forms ──────────────────────────── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-row.full{grid-template-columns:1fr}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:11px;color:var(--muted);font-weight:500}
+.form-input{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;font-size:12px;color:var(--text);outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--orange)}
+.form-input::placeholder{color:var(--dim)}
+select.form-input{cursor:pointer}
+/* ── Table ──────────────────────────── */
+.tbl{width:100%;font-size:12px;border-collapse:collapse}
+.tbl th{text-align:left;padding:8px 10px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);font-size:11px}
+.tbl td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+/* ── Badges ─────────────────────────── */
+.badge{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600}
+.badge-green{background:rgba(11,102,35,.25);color:#4caf50}
+.badge-amber{background:rgba(255,152,0,.15);color:var(--orange)}
+.badge-red{background:rgba(211,47,47,.2);color:var(--red)}
+.badge-blue{background:rgba(33,150,243,.15);color:#64b5f6}
+.badge-muted{background:rgba(255,255,255,.07);color:var(--muted)}
+/* ── Alert bar ──────────────────────── */
+.alert-bar{border-left:3px solid var(--red);background:rgba(211,47,47,.08);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.alert-bar.amber{border-left-color:var(--amber);background:rgba(245,158,11,.08)}
+/* ── Charts (CSS bars) ──────────────── */
+.bar-chart{display:flex;align-items:flex-end;gap:5px;height:90px;margin-top:8px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bar-fill{width:100%;border-radius:3px 3px 0 0;min-height:3px}
+.bar-lbl{font-size:9px;color:var(--dim)}
+/* ── Progress ───────────────────────── */
+.progress{height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin-top:5px}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--orange),var(--green))}
+/* ── Tabs ───────────────────────────── */
+.tabs{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.tab{padding:8px 14px;font-size:12px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;border-radius:var(--r-sm) var(--r-sm) 0 0}
+.tab.active{color:var(--orange);border-bottom-color:var(--orange);font-weight:600;background:rgba(255,152,0,.05)}
+.tab:hover:not(.active){color:var(--text)}
+/* ── Toast ──────────────────────────── */
+#toast{position:fixed;bottom:20px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast-item{background:var(--surface3);border:1px solid var(--card-border);border-radius:var(--r);padding:10px 14px;font-size:12px;max-width:280px;animation:toast-in .25s ease;display:flex;align-items:center;gap:8px}
+.toast-item.success{border-left:3px solid #4caf50}
+.toast-item.error{border-left:3px solid var(--red)}
+@keyframes toast-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+/* ── Modal ──────────────────────────── */
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px}
+#modal-overlay.open{display:flex}
+#modal-box{background:var(--surface);border:1px solid var(--card-border);border-radius:var(--r);width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:15px;font-weight:600}
+.modal-body{padding:16px}
+.modal-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.close-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:4px;font-size:18px;line-height:1}
+.close-btn:hover{color:var(--text);background:rgba(255,255,255,.06)}
+/* ── Search overlay ─────────────────── */
+#search-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;align-items:flex-start;justify-content:center;padding-top:80px}
+#search-overlay.open{display:flex}
+#search-box{background:var(--surface);border:1px solid rgba(255,152,0,.3);border-radius:var(--r);width:100%;max-width:520px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.search-input-row{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)}
+#search-input{background:transparent;border:none;outline:none;font-size:14px;color:var(--text);flex:1}
+#search-input::placeholder{color:var(--dim)}
+#search-results{max-height:320px;overflow-y:auto}
+.sr-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .1s}
+.sr-item:hover{background:rgba(255,152,0,.07)}
+.sr-type{font-size:10px;padding:2px 7px;border-radius:10px;flex-shrink:0}
+/* ── Shop page ──────────────────────── */
+.shop-hero{background:linear-gradient(135deg,#FF9800,#e65100 55%,#0B6623);padding:24px;border-radius:var(--r);margin-bottom:16px;color:#fff;text-align:center}
+.product-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.product-card{background:#fff;border-radius:var(--r);overflow:hidden;color:#111}
+.product-emoji{background:linear-gradient(135deg,#fff8f0,#f0faf4);padding:18px;text-align:center;font-size:32px}
+.product-info{padding:10px}
+.product-name{font-weight:700;font-size:13px}
+.product-price{color:var(--orange);font-weight:700;font-size:12px;margin:3px 0 6px}
+.add-to-cart{width:100%;background:#0B6623;color:#fff;border:none;border-radius:6px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.add-to-cart:hover{background:#0d7a2b}
+.qty-ctrl{display:flex;align-items:center;gap:6px;width:100%}
+.qty-btn{background:#0B6623;border:none;border-radius:5px;width:26px;height:26px;color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.qty-btn.minus{background:rgba(255,255,255,.15);color:#333}
+.qty-num{flex:1;text-align:center;font-weight:700;font-size:14px;color:#111}
+/* ── Sticky cart bar ────────────────── */
+#cart-bar{position:fixed;bottom:0;left:0;right:0;background:#0B6623;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;z-index:50;transform:translateY(100%);transition:transform .25s}
+#cart-bar.visible{transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- Search overlay -->
+<div id="search-overlay" onclick="if(event.target===this)closeSearch()">
+  <div id="search-box">
+    <div class="search-input-row">
+      <svg width="16" height="16" fill="none" stroke="#888" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="search-input" placeholder="Search clients, events, receipts, products…" oninput="handleSearch(this.value)" />
+      <kbd class="search-kbd" style="font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 6px;color:var(--muted)">esc</kbd>
+    </div>
+    <div id="search-results"></div>
+    <div style="padding:8px 14px;font-size:10px;color:var(--dim);border-top:1px solid var(--border)">↑↓ navigate · ↵ open · esc close</div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div id="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Modal</span>
+      <button class="close-btn" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<div id="app">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-badge">KJ</div>
+      <span class="sb-title">Karz Juice</span>
+      <button class="sb-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+      </button>
+    </div>
+    <div class="sb-scroll" id="nav-scroll"></div>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-avatar">A</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-weight:600">Admin User</div>
+          <div style="font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">admin@karzjuice.app</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+    <div id="topbar">
+      <span id="page-label">Dashboard</span>
+      <div id="search-wrap">
+        <button class="search-btn" onclick="openSearch()">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Search clients, events, receipts…
+          <span class="search-kbd">⌘K</span>
+        </button>
+      </div>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+
+<!-- Cart bar (shop) -->
+<div id="cart-bar">
+  <span id="cart-summary" style="color:#fff;font-weight:600;font-size:13px"></span>
+  <button class="btn btn-primary btn-sm" onclick="showPage('checkout')">View Cart →</button>
+</div>
+
+<script>
+// ── App State ─────────────────────────────────────────────────────────────────
+const state = {
+  page: 'dashboard',
+  sidebarCollapsed: false,
+  sales: [
+    { id:1, product:'Mango Juice 500ml', qty:20, unit:5000, total:100000, method:'Cash', date:'2026-04-22', time:'09:14' },
+    { id:2, product:'Passion Fruit 1L', qty:15, unit:10000, total:150000, method:'MoMo', date:'2026-04-22', time:'10:32' },
+    { id:3, product:'Mixed Fruit 300ml', qty:30, unit:3000, total:90000, method:'Cash', date:'2026-04-22', time:'11:05' },
+  ],
+  functions: [
+    { id:1, client:'Nakato Wedding', type:'Wedding', date:'2026-05-10', contract:8000000, deposit:4800000, balance:3200000, status:'overdue' },
+    { id:2, client:'Okello Corporate', type:'Corporate', date:'2026-05-20', contract:5000000, deposit:3000000, balance:2000000, status:'partial' },
+    { id:3, client:'Apio Birthday', type:'Birthday', date:'2026-06-01', contract:2000000, deposit:2000000, balance:0, status:'paid' },
+  ],
+  expenses: [
+    { id:1, date:'2026-04-22', desc:'Mangoes 10kg', cat:'Ingredients', amount:45000, method:'Cash' },
+    { id:2, date:'2026-04-22', desc:'Bottles 200 units', cat:'Packaging Materials', amount:32000, method:'Cash' },
+    { id:3, date:'2026-04-21', desc:'Staff wages', cat:'Wages & Salaries', amount:120000, method:'MoMo' },
+  ],
+  receivables: [
+    { id:1, client:'Kampala Hotels Ltd', invoice:450000, paid:120000, balance:330000, due:'2026-04-30', status:'overdue' },
+    { id:2, client:'Restaurant Chains', invoice:320000, paid:320000, balance:0, due:'2026-04-25', status:'paid' },
+    { id:3, client:'Corporate Catering', invoice:180000, paid:60000, balance:120000, due:'2026-05-05', status:'partial' },
+  ],
+  payables: [
+    { id:1, supplier:'Fresh Fruit Market', owed:125000, due:'2026-04-28', status:'pending', type:'Fruit Supplier' },
+    { id:2, supplier:'Packaging Solutions', owed:85000, due:'2026-04-18', status:'pending', type:'Packaging' },
+  ],
+  packages: [
+    { id:1, name:'Birthday Package', price:150000, items:['20 Mango 500ml','20 Passion 500ml','Decorative packaging'], status:'active' },
+    { id:2, name:'Wedding Package', price:350000, items:['50 Mixed 1L','50 Mango 500ml','Labelling','Cold storage'], status:'active' },
+    { id:3, name:'Kids Party Package', price:95000, items:['30 Mixed 300ml','20 Passion 300ml','Straws'], status:'active' },
+    { id:4, name:'Corporate Package', price:280000, items:['40 Mixed 1L','20 Beetroot 1L','Branded labels'], status:'inactive' },
+  ],
+  receipts: [
+    { id:1, rn:'RCP-20260422-00001', client:'Jane Nakato', amount:800000, method:'MoMo', date:'2026-04-22', emailed:true },
+    { id:2, rn:'RCP-20260422-00002', client:'Peter Okello', amount:500000, method:'Cash', date:'2026-04-22', emailed:false },
+  ],
+  products: [
+    { id:1, name:'Mango Juice 500ml', sku:'MJ-500', cat:'Fresh Juice', price:5000, stock:150 },
+    { id:2, name:'Passion Fruit 1L', sku:'PF-1L', cat:'Fresh Juice', price:10000, stock:80 },
+    { id:3, name:'Mixed Fruit 300ml', sku:'MF-300', cat:'Fresh Juice', price:3000, stock:120 },
+    { id:4, name:'Beetroot Mix 1L', sku:'BM-1L', cat:'Detox', price:8500, stock:45 },
+  ],
+  mtnTxns: [
+    { id:1, payer:'+256 701 234 567', name:'Jane Nakato', amount:800000, status:'unmatched', date:'2026-04-22 09:14', txnId:'MTN-20260422-001' },
+    { id:2, payer:'+256 702 345 678', name:'Peter Okello', amount:500000, status:'matched', date:'2026-04-22 10:30', txnId:'MTN-20260422-002' },
+  ],
+  cart: [],
+  dayBalance: { sales: 340000, expenses: 197000 },
+  nextSaleId: 4,
+  nextFuncId: 4,
+  nextExpId: 4,
+  nextRecId: 3,
+  nextPayId: 3,
+  nextPkgId: 5,
+};
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+const NAV = [
+  { group:'Core', items:[
+    { id:'dashboard', label:'Dashboard', icon:'grid' },
+    { id:'sales', label:'Sales', icon:'cart' },
+    { id:'functions', label:'Functions', icon:'cake' },
+    { id:'accounts', label:'Accounts', icon:'dollar' },
+    { id:'expenses', label:'Expenses', icon:'alert' },
+  ]},
+  { group:'Operations', items:[
+    { id:'machine-hire', label:'Machine Hire', icon:'wrench' },
+    { id:'vehicle-hire', label:'Vehicle Hire', icon:'truck' },
+    { id:'products', label:'Products', icon:'package' },
+    { id:'packages', label:'Packages', icon:'gift' },
+  ]},
+  { group:'Intelligence', items:[
+    { id:'ocr', label:'Receipts (OCR)', icon:'receipt' },
+    { id:'client-receipts', label:'Client Receipts', icon:'credit' },
+    { id:'receipt-printing', label:'Receipt Printing', icon:'printer' },
+    { id:'statements', label:'Statements', icon:'file' },
+    { id:'reports', label:'Reports', icon:'bar' },
+  ]},
+  { group:'Finance', items:[
+    { id:'receivables', label:'Receivables', icon:'dollar' },
+    { id:'payables', label:'Payables', icon:'dollar' },
+    { id:'drawings', label:'Drawings', icon:'trend' },
+    { id:'custom-accounts', label:'Custom Accounts', icon:'dollar' },
+  ]},
+  { group:'Payments', items:[
+    { id:'mtn', label:'MTN Mobile Money', icon:'phone' },
+    { id:'pesapal', label:'PesaPal Payment', icon:'credit' },
+  ]},
+  { group:'System', items:[
+    { id:'notifications', label:'Notifications', icon:'bell' },
+    { id:'admin', label:'Admin', icon:'settings' },
+    { id:'shop', label:'Shop (/shop)', icon:'store' },
+  ]},
+];
+
+const ICONS = {
+  grid:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+  cart:'<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>',
+  cake:'<path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v2"/><path d="M12 8v2"/><path d="M17 8v2"/><path d="M7 4h.01"/><path d="M12 4h.01"/><path d="M17 4h.01"/>',
+  dollar:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  alert:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+  wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  truck:'<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+  package:'<line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>',
+  gift:'<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+  receipt:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+  credit:'<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
+  printer:'<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
+  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+  bar:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  trend:'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
+  phone:'<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+  bell:'<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  store:'<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+};
+
+function icon(k,sz=15){return`<svg width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">${ICONS[k]||''}</svg>`}
+
+// ── Build sidebar ─────────────────────────────────────────────────────────────
+function buildSidebar(){
+  const el=document.getElementById('nav-scroll');
+  el.innerHTML=NAV.map(g=>`
+    <div class="sb-group-label">${g.group}</div>
+    ${g.items.map(it=>`<div class="sb-item${state.page===it.id?' active':''}" onclick="showPage('${it.id}')" title="${it.label}">
+      ${icon(it.icon)} <span>${it.label}</span>
+    </div>`).join('')}
+  `).join('');
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg,type='success'){
+  const div=document.createElement('div');
+  div.className=`toast-item ${type}`;
+  div.innerHTML=`${type==='success'?'✓':'⚠'} ${msg}`;
+  document.getElementById('toast').appendChild(div);
+  setTimeout(()=>div.remove(),3000);
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openModal(title,body,footer=''){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=body;
+  document.getElementById('modal-footer').innerHTML=footer;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open')}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+const SEARCH_DATA=[
+  ...state.functions.map(f=>({type:'Event',label:f.client,sub:f.type+' · UGX '+f.contract.toLocaleString(),color:'badge-amber',page:'functions'})),
+  ...state.receipts.map(r=>({type:'Receipt',label:r.rn,sub:r.client+' · UGX '+r.amount.toLocaleString(),color:'badge-green',page:'client-receipts'})),
+  ...state.products.map(p=>({type:'Product',label:p.name,sub:'SKU: '+p.sku,color:'badge-blue',page:'products'})),
+  ...state.receivables.map(r=>({type:'Client',label:r.client,sub:'Balance: UGX '+r.balance.toLocaleString(),color:'badge-muted',page:'receivables'})),
+  {type:'Package',label:'Birthday Package',sub:'UGX 150,000',color:'badge-amber',page:'packages'},
+  {type:'Account',label:'Cash Account',sub:'Code: CASH-001',color:'badge-blue',page:'accounts'},
+];
+function openSearch(){
+  document.getElementById('search-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('search-input').focus(),50);
+}
+function closeSearch(){document.getElementById('search-overlay').classList.remove('open');document.getElementById('search-input').value='';document.getElementById('search-results').innerHTML=''}
+function handleSearch(q){
+  const r=document.getElementById('search-results');
+  if(!q||q.length<2){r.innerHTML='<div style="padding:16px;text-align:center;font-size:12px;color:var(--dim)">Type 2+ characters to search</div>';return}
+  const hits=SEARCH_DATA.filter(d=>d.label.toLowerCase().includes(q.toLowerCase())||d.sub.toLowerCase().includes(q.toLowerCase()));
+  r.innerHTML=hits.length?hits.map(h=>`<div class="sr-item" onclick="closeSearch();showPage('${h.page}');toast('Navigated to ${h.label}')">
+    ${icon('receipt',13)}
+    <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">${h.label}</div><div style="font-size:11px;color:var(--muted)">${h.sub}</div></div>
+    <span class="badge ${h.color} sr-type">${h.type}</span>
+  </div>`).join('')
+  :'<div style="padding:16px;text-align:center;font-size:12px;color:var(--dim)">No results for "'+q+'"</div>';
+}
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();openSearch()}if(e.key==='Escape'){closeSearch();closeModal()}});
+
+// ── Sidebar toggle ────────────────────────────────────────────────────────────
+function toggleSidebar(){
+  state.sidebarCollapsed=!state.sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed',state.sidebarCollapsed);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const ugx=n=>`UGX ${Number(n).toLocaleString()}`;
+function statusBadge(s){const m={'paid':'badge-green','partial':'badge-amber','overdue':'badge-red','active':'badge-green','inactive':'badge-muted','pending':'badge-amber','matched':'badge-green','unmatched':'badge-amber','confirmed':'badge-blue'};return`<span class="badge ${m[s]||'badge-muted'}">${s.toUpperCase()}</span>`}
+
+// ── Page router ───────────────────────────────────────────────────────────────
+function showPage(id){
+  state.page=id;
+  // hide cart bar for non-shop
+  if(id!=='shop'&&id!=='checkout'){document.getElementById('cart-bar').classList.remove('visible')}
+  buildSidebar();
+  document.getElementById('page-label').textContent=NAV.flatMap(g=>g.items).find(i=>i.id===id)?.label||id;
+  const renders={
+    dashboard:renderDashboard,sales:renderSales,functions:renderFunctions,
+    accounts:renderAccounts,expenses:renderExpenses,'machine-hire':renderMachineHire,
+    'vehicle-hire':renderVehicleHire,products:renderProducts,packages:renderPackages,
+    ocr:renderOCR,'client-receipts':renderClientReceipts,'receipt-printing':renderReceiptPrinting,
+    statements:renderStatements,reports:renderReports,
+    receivables:renderReceivables,payables:renderPayables,
+    drawings:renderDrawings,'custom-accounts':renderCustomAccounts,
+    mtn:renderMtn,pesapal:renderPesapal,notifications:renderNotifications,
+    admin:renderAdmin,shop:renderShop,checkout:renderCheckout,
+  };
+  const fn=renders[id]||renderComingSoon;
+  document.getElementById('content').innerHTML=fn();
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const totalSales=state.sales.reduce((s,r)=>s+r.total,0);
+  const totalExp=state.expenses.reduce((s,r)=>s+r.amount,0);
+  const profit=totalSales-totalExp;
+  const overdue=state.functions.filter(f=>f.status==='overdue');
+  const bars=[340,280,420,380,510,460,totalSales/1000].map((v,i)=>({d:['Mon','Tue','Wed','Thu','Fri','Sat','Today'][i],s:Math.round(v),e:Math.round(v*0.35)}));
+  const maxV=Math.max(...bars.map(b=>b.s));
+  return`
+  <div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+    <div><div style="font-size:20px;font-weight:700">Organization Dashboard</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Today: ${new Date().toDateString()} · Welcome back, Admin</div></div>
+    <input type="date" value="${new Date().toISOString().split('T')[0]}" class="form-input" style="width:auto" onchange="toast('Date changed')" />
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi">${kpiCard('Daily Sales',ugx(totalSales),'orange','↑ 12% vs yesterday','cart')}</div>
+    <div class="kpi">${kpiCard('Expenses',ugx(totalExp),'red','Today spending','alert')}</div>
+    <div class="kpi">${kpiCard('Gross Profit',ugx(profit),'green','Net gain','dollar')}</div>
+    <div class="kpi">${kpiCard('Cash Balance',ugx(4200000),'orange','CASH-001','dollar')}</div>
+    <div class="kpi">${kpiCard('MoMo Balance',ugx(6800000),'green','MOMO-001','phone')}</div>
+    <div class="kpi">${kpiCard('Outstanding',ugx(state.functions.reduce((s,f)=>s+f.balance,0)),'amber','Function balances','file')}</div>
+  </div>
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:16px">
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Sales vs Expenses — This Week</div></div>
+        <div style="display:flex;gap:12px;font-size:10px">
+          <span style="display:flex;align-items:center;gap:4px;color:var(--muted)"><span style="width:8px;height:8px;background:var(--orange);display:inline-block;border-radius:2px"></span>Sales</span>
+          <span style="display:flex;align-items:center;gap:4px;color:var(--muted)"><span style="width:8px;height:8px;background:var(--red);display:inline-block;border-radius:2px"></span>Expenses</span>
+        </div>
+      </div>
+      <div class="bar-chart">
+        ${bars.map(b=>`<div class="bar-col">
+          <div class="bar-pair" style="display:flex;align-items:flex-end;gap:2px;width:100%;height:75px">
+            <div class="bar-fill" style="background:var(--orange);opacity:.9;height:${Math.round(b.s/maxV*70)+5}px;flex:1"></div>
+            <div class="bar-fill" style="background:var(--red);opacity:.8;height:${Math.round(b.e/maxV*70)+3}px;flex:1"></div>
+          </div>
+          <div class="bar-lbl">${b.d}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Income Split</div></div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="30" fill="none" stroke="#FF9800" stroke-width="16" stroke-dasharray="113 75" stroke-dashoffset="0"/>
+          <circle cx="40" cy="40" r="30" fill="none" stroke="#0B6623" stroke-width="16" stroke-dasharray="75 113" stroke-dashoffset="-113"/>
+          <circle cx="40" cy="40" r="20" fill="${state.surface||'#2A1E1B'}"/>
+        </svg>
+        <div style="font-size:11px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:5px;color:var(--muted)"><span style="width:8px;height:8px;background:var(--orange);border-radius:50%;display:inline-block"></span>Daily Sales 60%</div>
+          <div style="display:flex;align-items:center;gap:5px;color:var(--muted)"><span style="width:8px;height:8px;background:var(--green);border-radius:50%;display:inline-block"></span>Functions 40%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  ${overdue.length?`<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">⚠ Overdue Alerts</div>
+  ${overdue.map(f=>`<div class="alert-bar"><div><div style="font-size:13px;font-weight:600">${f.client}</div><div style="font-size:11px;color:var(--muted)">${f.type} · ${ugx(f.balance)} outstanding</div></div><span class="badge badge-red">OVERDUE</span></div>`).join('')}`:''}
+  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn btn-primary" onclick="showPage('sales')">+ Record Sale</button>
+    <button class="btn btn-ghost" onclick="showPage('functions')">View Functions</button>
+    <button class="btn btn-ghost" onclick="showPage('reports')">View Reports</button>
+    <button class="btn btn-ghost" onclick="showPage('mtn')">MTN Sync</button>
+  </div>`;
+}
+function kpiCard(label,val,cls,trend,ic){return`<div class="kpi-label">${icon(ic,12)} ${label}</div><div class="kpi-val ${cls}">${val}</div><div class="kpi-trend">${trend}</div>`}
+
+// ── Sales ─────────────────────────────────────────────────────────────────────
+function renderSales(){
+  const total=state.sales.reduce((s,r)=>s+r.total,0);
+  return`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><div style="font-size:20px;font-weight:700">Sales</div><div style="font-size:12px;color:var(--muted)">Daily sales recording — day is OPEN</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="toast('Day closed successfully! All sales locked.','success')">Close Day</button>
+      <button class="btn btn-primary" onclick="openSaleForm()">+ New Sale</button>
+    </div>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi">${kpiCard('Today Total',ugx(total),'orange',state.sales.length+' transactions','cart')}</div>
+    <div class="kpi">${kpiCard('Cash',ugx(state.sales.filter(s=>s.method==='Cash').reduce((a,s)=>a+s.total,0)),'green','Direct','dollar')}</div>
+    <div class="kpi">${kpiCard('Mobile Money',ugx(state.sales.filter(s=>s.method==='MoMo').reduce((a,s)=>a+s.total,0)),'amber','MTN/Airtel','phone')}</div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Today's Sales</div></div>
+    <table class="tbl">
+      <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Method</th><th>Time</th><th></th></tr></thead>
+      <tbody id="sales-tbody">
+        ${state.sales.map(s=>`<tr>
+          <td style="font-weight:500">${s.product}</td><td>${s.qty}</td>
+          <td>${ugx(s.unit)}</td><td class="orange" style="font-weight:600">${ugx(s.total)}</td>
+          <td>${statusBadge(s.method==='Cash'?'paid':'partial')}</td>
+          <td style="color:var(--muted)">${s.time}</td>
+          <td><button class="btn btn-danger btn-sm" onclick="deleteSale(${s.id})">Delete</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+function deleteSale(id){
+  state.sales=state.sales.filter(s=>s.id!==id);
+  toast('Sale deleted');showPage('sales');
+}
+function openSaleForm(){
+  openModal('Record New Sale',`
+    <div class="form-row"><div class="form-group"><label class="form-label">Product *</label>
+      <select class="form-input" id="sale-product">${state.products.map(p=>`<option value="${p.id}" data-price="${p.price}">${p.name}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Quantity *</label><input type="number" min="1" value="1" class="form-input" id="sale-qty" oninput="calcSaleTotal()" /></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Unit Price (UGX)</label><input type="number" class="form-input" id="sale-price" oninput="calcSaleTotal()" /></div>
+      <div class="form-group"><label class="form-label">Payment Method</label>
+        <select class="form-input" id="sale-method"><option>Cash</option><option>MoMo</option></select></div></div>
+    <div style="margin-top:8px;padding:10px;background:var(--surface2);border-radius:var(--r-sm);font-size:13px">Total: <b class="orange" id="sale-total">UGX 0</b></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitSale()">Record Sale</button>`);
+  // Set initial price
+  setTimeout(()=>{
+    const sel=document.getElementById('sale-product');
+    const opt=sel.options[sel.selectedIndex];
+    document.getElementById('sale-price').value=opt.dataset.price||0;
+    sel.onchange=()=>{const o=sel.options[sel.selectedIndex];document.getElementById('sale-price').value=o.dataset.price||0;calcSaleTotal()};
+    calcSaleTotal();
+  },50);
+}
+function calcSaleTotal(){
+  const qty=parseFloat(document.getElementById('sale-qty')?.value||0);
+  const price=parseFloat(document.getElementById('sale-price')?.value||0);
+  const el=document.getElementById('sale-total');
+  if(el)el.textContent=ugx(qty*price);
+}
+function submitSale(){
+  const sel=document.getElementById('sale-product');
+  const product=state.products.find(p=>p.id===parseInt(sel.value));
+  const qty=parseInt(document.getElementById('sale-qty').value);
+  const price=parseFloat(document.getElementById('sale-price').value);
+  const method=document.getElementById('sale-method').value;
+  if(!qty||!price){toast('Please fill all fields','error');return}
+  const now=new Date();
+  state.sales.push({id:state.nextSaleId++,product:product.name,qty,unit:price,total:qty*price,method,date:now.toISOString().split('T')[0],time:now.toTimeString().slice(0,5)});
+  state.dayBalance.sales+=qty*price;
+  closeModal();toast(`Sale recorded! ${ugx(qty*price)}`);showPage('sales');
+}
+
+// ── Functions ─────────────────────────────────────────────────────────────────
+function renderFunctions(){
+  const total=state.functions.reduce((s,f)=>s+f.contract,0);
+  return`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><div style="font-size:20px;font-weight:700">Functions & Events</div><div style="font-size:12px;color:var(--muted)">Manage wedding and event contracts</div></div>
+    <button class="btn btn-primary" onclick="openFunctionForm()">+ New Function</button>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi">${kpiCard('Total Contracted',ugx(total),'orange',state.functions.length+' events','dollar')}</div>
+    <div class="kpi">${kpiCard('Overdue',state.functions.filter(f=>f.status==='overdue').length+' events','red','Needs follow-up','alert')}</div>
+    <div class="kpi">${kpiCard('Outstanding',ugx(state.functions.reduce((s,f)=>s+f.balance,0)),'amber','Unpaid balance','dollar')}</div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Event Contracts</div></div>
+    <table class="tbl">
+      <thead><tr><th>Client</th><th>Type</th><th>Date</th><th>Contract</th><th>Deposit</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${state.functions.map(f=>`<tr>
+        <td style="font-weight:600">${f.client}</td><td>${f.type}</td><td>${f.date}</td>
+        <td>${ugx(f.contract)}</td>
+        <td class="green">${ugx(f.deposit)}</td>
+        <td class="${f.balance>0?'red':''}">${ugx(f.balance)}</td>
+        <td>${statusBadge(f.status)}</td>
+        <td style="display:flex;gap:4px">
+          <button class="btn btn-green btn-sm" onclick="recordPayment(${f.id})">+ Payment</button>
+          <button class="btn btn-ghost btn-sm" onclick="toast('Receipt generated for ${f.client}')">Receipt</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFunction(${f.id})">Delete</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+function openFunctionForm(){
+  openModal('New Event/Function',`
+    <div class="form-row"><div class="form-group"><label class="form-label">Client Name *</label><input class="form-input" id="fn-client" placeholder="e.g. Nakato Wedding" /></div>
+      <div class="form-group"><label class="form-label">Event Type</label><select class="form-input" id="fn-type"><option>Wedding</option><option>Birthday</option><option>Corporate</option><option>Kids Party</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Event Date</label><input type="date" class="form-input" id="fn-date" /></div>
+      <div class="form-group"><label class="form-label">Contract Amount (UGX)</label><input type="number" class="form-input" id="fn-contract" placeholder="0" /></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Deposit Paid (UGX)</label><input type="number" class="form-input" id="fn-deposit" placeholder="0" /></div></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitFunction()">Create Function</button>`);
+}
+function submitFunction(){
+  const client=document.getElementById('fn-client').value;
+  const type=document.getElementById('fn-type').value;
+  const date=document.getElementById('fn-date').value;
+  const contract=parseFloat(document.getElementById('fn-contract').value)||0;
+  const deposit=parseFloat(document.getElementById('fn-deposit').value)||0;
+  if(!client||!contract){toast('Client name and contract amount required','error');return}
+  const balance=contract-deposit;
+  const status=balance<=0?'paid':deposit>0?'partial':'partial';
+  state.functions.push({id:state.nextFuncId++,client,type,date,contract,deposit,balance,status});
+  closeModal();toast(`Function created: ${client}`);showPage('functions');
+}
+function recordPayment(id){
+  const fn=state.functions.find(f=>f.id===id);
+  openModal(`Record Payment — ${fn.client}`,`
+    <div style="margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:var(--r-sm);font-size:12px">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Balance remaining</span><span class="red" style="font-weight:700">${ugx(fn.balance)}</span></div>
+    </div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Amount (UGX) *</label><input type="number" class="form-input" id="pay-amount" placeholder="0" /></div>
+      <div class="form-group"><label class="form-label">Method</label><select class="form-input" id="pay-method"><option>Cash</option><option>Mobile Money</option><option>Bank Transfer</option></select></div></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-green" onclick="submitPayment(${id})">Record Payment</button>`);
+}
+function submitPayment(id){
+  const amt=parseFloat(document.getElementById('pay-amount').value)||0;
+  if(!amt){toast('Enter payment amount','error');return}
+  const fn=state.functions.find(f=>f.id===id);
+  fn.deposit+=amt;fn.balance=Math.max(0,fn.balance-amt);
+  fn.status=fn.balance<=0?'paid':'partial';
+  closeModal();toast(`Payment of ${ugx(amt)} recorded for ${fn.client}`);showPage('functions');
+}
+function deleteFunction(id){
+  const fn=state.functions.find(f=>f.id===id);
+  if(fn.balance>0){toast('Cannot delete: outstanding balance of '+ugx(fn.balance),'error');return}
+  state.functions=state.functions.filter(f=>f.id!==id);
+  toast('Function deleted');showPage('functions');
+}
+
+// ── Accounts ──────────────────────────────────────────────────────────────────
+function renderAccounts(){
+  const ledger=[
+    {id:'SALE-001',desc:'Sale of Mango 500ml',debit:'CASH-001',credit:'SALES-REV',amount:100000,date:'Today'},
+    {id:'EXP-001',desc:'Fruit supplier payment',debit:'EXPENSE',credit:'CASH-001',amount:45000,date:'Today'},
+    {id:'FN-001',desc:'Nakato Wedding deposit',debit:'MOMO-001',credit:'FN-NAKATO',amount:4800000,date:'Yesterday'},
+  ];
+  return`
+  <div style="font-size:20px;font-weight:700;margin-bottom:14px">Accounts & Finance</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi">${kpiCard('Cash',ugx(4200000),'orange','CASH-001','dollar')}</div>
+    <div class="kpi">${kpiCard('Mobile Money',ugx(6800000),'green','MOMO-001','phone')}</div>
+    <div class="kpi">${kpiCard('Function Accounts',ugx(state.functions.reduce((s,f)=>s+f.deposit,0)),'amber',state.functions.length+' events','cake')}</div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Recent Ledger Entries</div><div style="font-size:11px;color:var(--dim)">Debits = Credits ✓</div></div>
+    <table class="tbl">
+      <thead><tr><th>Transaction ID</th><th>Description</th><th>Debit Account</th><th>Credit Account</th><th>Amount</th><th>Date</th></tr></thead>
+      <tbody>${ledger.map(e=>`<tr>
+        <td style="font-family:monospace;font-size:10px;color:var(--muted)">${e.id}</td>
+        <td>${e.desc}</td><td>${e.debit}</td><td>${e.credit}</td>
+        <td class="green" style="font-weight:600">${ugx(e.amount)}</td>
+        <td style="color:var(--muted)">${e.date}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
+// ── Expenses ──────────────────────────────────────────────────────────────────
+function renderExpenses(){
+  const total=state.expenses.reduce((s,e)=>s+e.amount,0);
+  const cats={};state.expenses.forEach(e=>{cats[e.cat]=(cats[e.cat]||0)+e.amount});
+  return`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><div style="font-size:20px;font-weight:700">Expenses</div><div style="font-size:12px;color:var(--muted)">7 categories including Packaging Materials & Wages</div></div>
+    <button class="btn btn-primary" onclick="openExpenseForm()">+ Record Expense</button>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    ${Object.entries(cats).map(([cat,amt])=>`<div class="kpi"><div class="kpi-label">${cat}</div><div class="kpi-val orange">${ugx(amt)}</div></div>`).join('')}
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Method</th><th></th></tr></thead>
+      <tbody id="exp-tbody">${state.expenses.map(e=>`<tr>
+        <td>${e.date}</td><td>${e.desc}</td>
+        <td><span class="badge badge-blue">${e.cat}</span></td>
+        <td class="red" style="font-weight:600">${ugx(e.amount)}</td>
+        <td>${e.method}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteExpense(${e.id})">Delete</button></td>
+      </tr>`).join('')}</tbody>
+    </table>
+    <div style="padding:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px">
+      <span style="color:var(--muted)">Total</span><span style="font-weight:700;color:var(--red)">${ugx(total)}</span>
+    </div>
+  </div>`;
+}
+function openExpenseForm(){
+  openModal('Record Expense',`
+    <div class="form-row"><div class="form-group"><label class="form-label">Description *</label><input class="form-input" id="exp-desc" placeholder="e.g. Mangoes 10kg" /></div>
+      <div class="form-group"><label class="form-label">Amount (UGX) *</label><input type="number" class="form-input" id="exp-amount" placeholder="0" /></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Category *</label>
+      <select class="form-input" id="exp-cat">
+        <option>Ingredients</option><option>Packaging Materials</option><option>Wages & Salaries</option>
+        <option>Machine Hire</option><option>Vehicle Hire</option><option>Utilities</option><option>General</option>
+      </select></div>
+      <div class="form-group"><label class="form-label">Payment Method</label>
+        <select class="form-input" id="exp-method"><option>Cash</option><option>Mobile Money</option></select></div></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitExpense()">Record Expense</button>`);
+}
+function submitExpense(){
+  const desc=document.getElementById('exp-desc').value;
+  const amount=parseFloat(document.getElementById('exp-amount').value)||0;
+  const cat=document.getElementById('exp-cat').value;
+  const method=document.getElementById('exp-method').value;
+  if(!desc||!amount){toast('Description and amount required','error');return}
+  state.expenses.push({id:state.nextExpId++,date:new Date().toISOString().split('T')[0],desc,cat,amount,method});
+  closeModal();toast(`Expense recorded: ${ugx(amount)}`);showPage('expenses');
+}
+function deleteExpense(id){
+  state.expenses=state.expenses.filter(e=>e.id!==id);
+  toast('Expense deleted');showPage('expenses');
+}
+
+// ── Products ──────────────────────────────────────────────────────────────────
+function renderProducts(){
+  return`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><div style="font-size:20px;font-weight:700">Products & BOM</div><div style="font-size:12px;color:var(--muted)">Juice product catalogue</div></div>
+    <button class="btn btn-primary" onclick="openProductForm()">+ Add Product</button>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>Product</th><th>SKU</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th></th></tr></thead>
+      <tbody>${state.products.map(p=>`<tr>
+        <td style="font-weight:600">${p.name}</td><td style="font-family:monospace;font-size:11px">${p.sku}</td>
+        <td><span class="badge badge-blue">${p.cat}</span></td>
+        <td class="orange">${ugx(p.price)}</td><td>${p.stock} units</td>
+        <td>${statusBadge('active')}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">Delete</button></td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+function openProductForm(){
+  openModal('Add Product',`
+    <div class="form-row"><div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="prod-name" placeholder="e.g. Watermelon Juice 500ml" /></div>
+      <div class="form-group"><label class="form-label">SKU *</label><input class="form-input" id="prod-sku" placeholder="e.g. WJ-500" /></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Category</label>
+      <select class="form-input" id="prod-cat"><option>Fresh Juice</option><option>Detox</option><option>Energy Boost</option><option>Premium Blend</option></select></div>
+      <div class="form-group"><label class="form-label">Price (UGX)</label><input type="number" class="form-input" id="prod-price" placeholder="0" /></div></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitProduct()">Add Product</button>`);
+}
+function submitProduct(){
+  const name=document.getElementById('prod-name').value;
+  const sku=document.getElementById('prod-sku').value;
+  const cat=document.getElementById('prod-cat').value;
+  const price=parseFloat(document.getElementById('prod-price').value)||0;
+  if(!name||!sku){toast('Name and SKU required','error');return}
+  state.products.push({id:state.products.length+1,name,sku,cat,price,stock:0});
+  closeModal();toast(`Product added: ${name}`);showPage('products');
+}
+function deleteProduct(id){state.products=state.products.filter(p=>p.id!==id);toast('Product deleted');showPage('products')}
+
+// ── Packages ──────────────────────────────────────────────────────────────────
+function renderPackages(){
+  return`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><div style="font-size:20px;font-weight:700">Packages</div><div style="font-size:12px;color:var(--muted)">Special juice bundles for events</div></div>
+    <button class="btn btn-primary" onclick="openPackageForm()">+ Add Package</button>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi"><div class="kpi-label">Total</div><div class="kpi-val orange">${state.packages.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Active</div><div class="kpi-val green">${state.packages.filter(p=>p.status==='active').length}</div></div>
+    <div class="kpi"><div class="kpi-label">Avg Price</div><div class="kpi-val orange">${ugx(Math.round(state.packages.reduce((s,p)=>s+p.price,0)/state.packages.length))}</div></div>
+    <div class="kpi"><div class="kpi-label">Inactive</div><div class="kpi-val amber">${state.packages.filter(p=>p.status==='inactive').length}</div></div>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>Package</th><th>Price</th><th>Items</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${state.packages.map(p=>`<tr>
+        <td style="font-weight:600">${p.name}</td>
+        <td class="orange" style="font-weight:600">${ugx(p.price)}</td>
+        <td style="color:var(--muted)">${p.items.length} items</td>
+        <td>${statusBadge(p.status)}</td>
+        <td style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick="togglePackage(${p.id})">${p.status==='active'?'Deactivate':'Activate'}</button>
+          <button class="btn btn-ghost btn-sm" onclick="viewPackage(${p.id})">View</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePackage(${p.id})">Delete</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+function openPackageForm(){
+  openModal('New Package',`
+    <div class="form-row"><div class="form-group"><label class="form-label">Package Name *</label>
+      <select class="form-input" id="pkg-name"><option>Birthday Package</option><option>Wedding Package</option><option>Women Care Package</option><option>Kids Party Package</option><option>Corporate Package</option></select></div>
+      <div class="form-group"><label class="form-label">Price (UGX) *</label><input type="number" class="form-input" id="pkg-price" placeholder="0" /></div></div>
+    <div class="form-row full"><div class="form-group"><label class="form-label">Description</label><input class="form-input" id="pkg-desc" placeholder="e.g. Full wedding service bundle" /></div></div>
+    <div class="form-row full"><div class="form-group"><label class="form-label">Included items (one per line)</label><textarea class="form-input" id="pkg-items" rows="3" placeholder="20 Mango Juice Bottles&#10;20 Passion Juice Bottles&#10;Decorative packaging"></textarea></div></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitPackage()">Create Package</button>`);
+}
+function submitPackage(){
+  const name=document.getElementById('pkg-name').value;
+  const price=parseFloat(document.getElementById('pkg-price').value)||0;
+  const items=document.getElementById('pkg-items').value.split('\n').filter(Boolean);
+  if(!price){toast('Price required','error');return}
+  state.packages.push({id:state.nextPkgId++,name,price,items,status:'active'});
+  closeModal();toast(`Package created: ${name}`);showPage('packages');
+}
+function togglePackage(id){const p=state.packages.find(p=>p.id===id);p.status=p.status==='active'?'inactive':'active';toast(`Package ${p.status}`);showPage('packages')}
+function viewPackage(id){const p=state.packages.find(p=>p.id===id);openModal(p.name,`<div style="font-size:13px;color:var(--muted);margin-bottom:10px">${ugx(p.price)}</div><ul style="padding-left:16px;font-size:12px">${p.items.map(i=>`<li style="margin-bottom:4px">${i}</li>`).join('')}</ul>`,`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`)}
+function deletePackage(id){state.packages=state.packages.filter(p=>p.id!==id);toast('Package deleted');showPage('packages')}
+
+// ── Receivables ───────────────────────────────────────────────────────────────
+function renderReceivables(){
+  return`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><div style="font-size:20px;font-weight:700">Accounts Receivable</div><div style="font-size:12px;color:var(--muted)">Track money owed by clients</div></div>
+    <button class="btn btn-primary" onclick="openReceivableForm()">+ Add Receivable</button>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi">${kpiCard('Total Outstanding',ugx(state.receivables.reduce((s,r)=>s+r.balance,0)),'orange','Across all clients','dollar')}</div>
+    <div class="kpi">${kpiCard('Overdue',state.receivables.filter(r=>r.status==='overdue').length+' clients','red','Needs follow-up','alert')}</div>
+    <div class="kpi">${kpiCard('Collected',ugx(state.receivables.reduce((s,r)=>s+r.paid,0)),'green','Amount received','dollar')}</div>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>Client</th><th>Invoice</th><th>Paid</th><th>Balance</th><th>Due Date</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${state.receivables.map(r=>`<tr>
+        <td style="font-weight:600">${r.client}</td>
+        <td>${ugx(r.invoice)}</td><td class="green">${ugx(r.paid)}</td>
+        <td class="${r.balance>0?'red':''}" style="font-weight:${r.balance>0?'600':'400'}">${ugx(r.balance)}</td>
+        <td>${r.due}</td><td>${statusBadge(r.status)}</td>
+        <td><button class="btn btn-green btn-sm" onclick="payReceivable(${r.id})">Record Payment</button></td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+function openReceivableForm(){
+  openModal('Add Receivable',`
+    <div class="form-row"><div class="form-group"><label class="form-label">Client Name *</label><input class="form-input" id="rec-client" /></div>
+      <div class="form-group"><label class="form-label">Invoice Amount (UGX)</label><input type="number" class="form-input" id="rec-invoice" /></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Amount Paid</label><input type="number" class="form-input" id="rec-paid" value="0" /></div>
+      <div class="form-group"><label class="form-label">Due Date</label><input type="date" class="form-input" id="rec-due" /></div></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitReceivable()">Add</button>`);
+}
+function submitReceivable(){
+  const client=document.getElementById('rec-client').value;
+  const invoice=parseFloat(document.getElementById('rec-invoice').value)||0;
+  const paid=parseFloat(document.getElementById('rec-paid').value)||0;
+  const due=document.getElementById('rec-due').value;
+  if(!client||!invoice){toast('Client and amount required','error');return}
+  const balance=invoice-paid;
+  const status=balance<=0?'paid':paid>0?'partial':'partial';
+  state.receivables.push({id:state.nextRecId++,client,invoice,paid,balance,due,status});
+  closeModal();toast(`Receivable added: ${client}`);showPage('receivables');
+}
+function payReceivable(id){
+  const r=state.receivables.find(r=>r.id===id);
+  openModal('Record Payment — '+r.client,`
+    <div style="margin-bottom:10px;padding:10px;background:var(--surface2);border-radius:var(--r-sm);font-size:12px">Balance: <b class="red">${ugx(r.balance)}</b></div>
+    <div class="form-group"><label class="form-label">Amount (UGX)</label><input type="number" class="form-input" id="rpay-amount" max="${r.balance}" /></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-green" onclick="submitRecPayment(${id})">Confirm</button>`);
+}
+function submitRecPayment(id){
+  const amt=parseFloat(document.getElementById('rpay-amount').value)||0;
+  if(!amt){toast('Enter amount','error');return}
+  const r=state.receivables.find(r=>r.id===id);
+  r.paid+=amt;r.balance=Math.max(0,r.balance-amt);r.status=r.balance<=0?'paid':'partial';
+  closeModal();toast(`Payment of ${ugx(amt)} recorded`);showPage('receivables');
+}
+
+// ── Payables ──────────────────────────────────────────────────────────────────
+function renderPayables(){
+  return`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><div style="font-size:20px;font-weight:700">Accounts Payable</div><div style="font-size:12px;color:var(--muted)">Track money owed to suppliers</div></div>
+    <button class="btn btn-primary" onclick="openPayableForm()">+ Add Payable</button>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>Supplier</th><th>Type</th><th>Amount Owed</th><th>Due Date</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${state.payables.map(p=>`<tr>
+        <td style="font-weight:600">${p.supplier}</td><td>${p.type}</td>
+        <td class="red" style="font-weight:600">${ugx(p.owed)}</td><td>${p.due}</td>
+        <td>${statusBadge(p.status)}</td>
+        <td><button class="btn btn-green btn-sm" onclick="payPayable(${p.id})">Pay</button></td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+function openPayableForm(){
+  openModal('Add Payable',`
+    <div class="form-row"><div class="form-group"><label class="form-label">Supplier Name *</label><input class="form-input" id="pay-supplier" /></div>
+      <div class="form-group"><label class="form-label">Type</label><select class="form-input" id="pay-type"><option>Fruit Supplier</option><option>Packaging</option><option>Machine Owner</option><option>Vehicle Hire</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Amount (UGX)</label><input type="number" class="form-input" id="pay-owed" /></div>
+      <div class="form-group"><label class="form-label">Due Date</label><input type="date" class="form-input" id="pay-due" /></div></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitPayable()">Add</button>`);
+}
+function submitPayable(){
+  const supplier=document.getElementById('pay-supplier').value;
+  const owed=parseFloat(document.getElementById('pay-owed').value)||0;
+  const due=document.getElementById('pay-due').value;
+  const type=document.getElementById('pay-type').value;
+  if(!supplier||!owed){toast('Supplier and amount required','error');return}
+  state.payables.push({id:state.nextPayId++,supplier,owed,due,status:'pending',type});
+  closeModal();toast(`Payable added: ${supplier}`);showPage('payables');
+}
+function payPayable(id){
+  const p=state.payables.find(p=>p.id===id);p.status='paid';
+  toast(`${p.supplier} marked as paid`);showPage('payables');
+}
+
+// ── Client Receipts ───────────────────────────────────────────────────────────
+function renderClientReceipts(){
+  return`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><div style="font-size:20px;font-weight:700">Client Receipts</div><div style="font-size:12px;color:var(--muted)">Official receipts with QR verification codes</div></div>
+    <button class="btn btn-primary" onclick="openReceiptForm()">+ New Receipt</button>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kpi-label">Total Receipts</div><div class="kpi-val orange">${state.receipts.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Emailed</div><div class="kpi-val green">${state.receipts.filter(r=>r.emailed).length}</div></div>
+    <div class="kpi"><div class="kpi-label">Total Collected</div><div class="kpi-val orange">${ugx(state.receipts.reduce((s,r)=>s+r.amount,0))}</div></div>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>Receipt #</th><th>Client</th><th>Amount</th><th>Method</th><th>Date</th><th>Emailed</th><th>Actions</th></tr></thead>
+      <tbody>${state.receipts.map(r=>`<tr>
+        <td style="font-family:monospace;font-size:11px">${r.rn}</td>
+        <td style="font-weight:600">${r.client}</td>
+        <td class="green" style="font-weight:600">${ugx(r.amount)}</td>
+        <td>${r.method}</td><td>${r.date}</td>
+        <td>${r.emailed?'<span class="badge badge-green">✓ Sent</span>':'<span class="badge badge-muted">—</span>'}</td>
+        <td style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick="printReceipt('${r.rn}')">Print</button>
+          <button class="btn btn-ghost btn-sm" onclick="emailReceipt(${r.id})">${r.emailed?'Re-send':'Email'}</button>
+          <button class="btn btn-ghost btn-sm" onclick="toast('QR verified: ${r.rn} is authentic ✓')">Verify QR</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+function openReceiptForm(){
+  openModal('New Client Receipt',`
+    <div class="form-row"><div class="form-group"><label class="form-label">Client Name *</label><input class="form-input" id="rcp-client" /></div>
+      <div class="form-group"><label class="form-label">Event Reference</label><input class="form-input" id="rcp-event" placeholder="e.g. Wedding 2026-05" /></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Amount Paid (UGX) *</label><input type="number" class="form-input" id="rcp-amount" /></div>
+      <div class="form-group"><label class="form-label">Payment Method</label>
+        <select class="form-input" id="rcp-method"><option>Mobile Money</option><option>Cash</option><option>Bank Transfer</option></select></div></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitReceipt()">Generate Receipt</button>`);
+}
+function submitReceipt(){
+  const client=document.getElementById('rcp-client').value;
+  const amount=parseFloat(document.getElementById('rcp-amount').value)||0;
+  const method=document.getElementById('rcp-method').value;
+  if(!client||!amount){toast('Client and amount required','error');return}
+  const today=new Date().toISOString().split('T')[0].replace(/-/g,'');
+  const rn=`RCP-${today}-${String(state.nextRecId).padStart(5,'0')}`;
+  state.receipts.push({id:state.nextRecId++,rn,client,amount,method,date:new Date().toISOString().split('T')[0],emailed:false});
+  closeModal();toast(`Receipt ${rn} generated with QR code`);showPage('client-receipts');
+}
+function printReceipt(rn){toast(`Printing receipt ${rn}…`)}
+function emailReceipt(id){const r=state.receipts.find(r=>r.id===id);r.emailed=true;toast(`Receipt emailed to ${r.client}`);showPage('client-receipts')}
+
+// ── MTN Dashboard ─────────────────────────────────────────────────────────────
+function renderMtn(){
+  return`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><div style="font-size:20px;font-weight:700">MTN Mobile Money</div><div style="font-size:12px;color:var(--muted)">Auto-reconcile MTN transactions with receivables</div></div>
+    <button class="btn btn-primary" onclick="mtnSync()">↻ Sync Now</button>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Total Transactions</div><div class="kpi-val orange">${state.mtnTxns.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Matched</div><div class="kpi-val green">${state.mtnTxns.filter(t=>t.status==='matched').length}</div></div>
+    <div class="kpi"><div class="kpi-label">Unmatched</div><div class="kpi-val amber">${state.mtnTxns.filter(t=>t.status==='unmatched').length}</div></div>
+    <div class="kpi"><div class="kpi-label">Account Balance</div><div class="kpi-val orange">UGX 6,800,000</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Unmatched Transactions</div></div>
+    ${state.mtnTxns.filter(t=>t.status==='unmatched').map(t=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:8px">
+      <div style="flex:1"><div style="font-size:13px;font-weight:600">${t.name||t.payer}</div>
+        <div style="font-size:11px;color:var(--muted);font-family:monospace">${t.txnId}</div>
+        <div style="font-size:11px;color:var(--muted)">${t.date}</div></div>
+      <div style="text-align:right;margin-right:12px"><div class="orange" style="font-weight:700">${ugx(t.amount)}</div>${statusBadge(t.status)}</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <button class="btn btn-green btn-sm" onclick="matchMtn(${t.id})">Match to Receivable</button>
+        <button class="btn btn-danger btn-sm" onclick="disputeMtn(${t.id})">Dispute</button>
+      </div>
+    </div>`).join('')||'<div style="text-align:center;padding:20px;color:var(--muted)">✓ All transactions are matched!</div>'}
+    <div class="card-header" style="margin-top:14px"><div class="card-title">All Transactions</div></div>
+    <table class="tbl">
+      <thead><tr><th>Txn ID</th><th>Payer</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead>
+      <tbody>${state.mtnTxns.map(t=>`<tr>
+        <td style="font-family:monospace;font-size:10px">${t.txnId}</td>
+        <td>${t.name||t.payer}</td>
+        <td class="orange" style="font-weight:600">${ugx(t.amount)}</td>
+        <td style="color:var(--muted)">${t.date}</td>
+        <td>${statusBadge(t.status)}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+function mtnSync(){toast('Syncing MTN transactions…');setTimeout(()=>{toast('Sync complete: 1 matched, 1 unmatched')},1200)}
+function matchMtn(id){
+  const t=state.mtnTxns.find(t=>t.id===id);
+  openModal('Match MTN Transaction',`
+    <div style="padding:10px;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:12px;font-size:12px">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Payer</span><b>${t.name||t.payer}</b></div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px"><span style="color:var(--muted)">Amount</span><b class="orange">${ugx(t.amount)}</b></div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Select matching receivable:</div>
+    ${state.receivables.filter(r=>r.status!=='paid').map(r=>`
+      <div onclick="confirmMtnMatch(${id},${r.id})" style="padding:10px;border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;cursor:pointer;transition:border-color .15s" onmouseenter="this.style.borderColor='var(--orange)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <div style="display:flex;justify-content:space-between;font-size:12px"><b>${r.client}</b><span class="red" style="font-weight:700">${ugx(r.balance)}</span></div>
+        <div style="font-size:11px;color:var(--muted)">Due ${r.due} · ${r.status}</div>
+      </div>`).join('')}`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>`);
+}
+function confirmMtnMatch(txnId,recId){
+  const t=state.mtnTxns.find(t=>t.id===txnId);
+  const r=state.receivables.find(r=>r.id===recId);
+  t.status='matched';
+  r.paid+=t.amount;r.balance=Math.max(0,r.balance-t.amount);r.status=r.balance<=0?'paid':'partial';
+  closeModal();toast(`Matched! ${t.name||t.payer} → ${r.client}`);showPage('mtn');
+}
+function disputeMtn(id){const t=state.mtnTxns.find(t=>t.id===id);t.status='disputed';toast('Dispute reported for '+t.txnId);showPage('mtn')}
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+function renderReports(){
+  const totalSales=state.sales.reduce((s,r)=>s+r.total,0);
+  const totalExp=state.expenses.reduce((s,r)=>s+r.amount,0);
+  return`
+  <div style="font-size:20px;font-weight:700;margin-bottom:14px">Reports</div>
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-title" style="margin-bottom:12px">Send Report Email</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <input type="email" class="form-input" id="report-email" placeholder="recipient@example.com" style="flex:1;min-width:200px" />
+      <select class="form-input" style="width:160px"><option>Weekly Summary</option><option>Monthly Report</option></select>
+      <button class="btn btn-orange" onclick="sendReport()">Send ✉</button>
+    </div>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi">${kpiCard('Today Sales',ugx(totalSales),'orange','Live','cart')}</div>
+    <div class="kpi">${kpiCard('Today Expenses',ugx(totalExp),'red','Live','alert')}</div>
+    <div class="kpi">${kpiCard('Gross Profit',ugx(totalSales-totalExp),'green','Live','dollar')}</div>
+    <div class="kpi">${kpiCard('Function Income',ugx(state.functions.reduce((s,f)=>s+f.deposit,0)),'amber','All time','cake')}</div>
+  </div>`;
+}
+function sendReport(){
+  const email=document.getElementById('report-email').value;
+  if(!email||!email.includes('@')){toast('Enter a valid email address','error');return}
+  toast(`Report sent to ${email}`);
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+function renderAdmin(){
+  const users=[
+    {id:1,name:'Admin User',email:'admin@karzjuice.app',role:'admin',status:'approved'},
+    {id:2,name:'Sarah Finance',email:'sarah@karzjuice.app',role:'finance',status:'approved'},
+    {id:3,name:'Moses Kato',email:'moses@example.com',role:'user',status:'pending'},
+    {id:4,name:'Fatuma Atim',email:'fatuma@example.com',role:'user',status:'pending'},
+  ];
+  return`
+  <div style="font-size:20px;font-weight:700;margin-bottom:14px">Admin Dashboard</div>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Total Users</div><div class="kpi-val orange">${users.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Pending Approval</div><div class="kpi-val red">${users.filter(u=>u.status==='pending').length}</div></div>
+    <div class="kpi"><div class="kpi-label">Database</div><div class="kpi-val green">Healthy</div></div>
+    <div class="kpi"><div class="kpi-label">API</div><div class="kpi-val green">Online</div></div>
+  </div>
+  <div class="tabs" id="admin-tabs">
+    <div class="tab active" onclick="adminTab(this,'users')">Users</div>
+    <div class="tab" onclick="adminTab(this,'approvals')">Approvals (${users.filter(u=>u.status==='pending').length})</div>
+    <div class="tab" onclick="adminTab(this,'audit')">Audit Log</div>
+    <div class="tab" onclick="adminTab(this,'settings')">Settings</div>
+  </div>
+  <div id="admin-content">
+    <div class="card" id="tab-users">
+      <table class="tbl">
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>${users.map(u=>`<tr>
+          <td style="font-weight:600">${u.name}</td><td style="color:var(--muted)">${u.email}</td>
+          <td><span class="badge ${u.role==='admin'?'badge-red':u.role==='finance'?'badge-green':'badge-muted'}">${u.role.toUpperCase()}</span></td>
+          <td>${statusBadge(u.status==='approved'?'paid':u.status)}</td>
+          <td><select class="form-input" style="width:110px;padding:4px 8px;font-size:11px" onchange="toast('Role updated to '+this.value)"><option ${u.role==='user'?'selected':''}>user</option><option ${u.role==='finance'?'selected':''}>finance</option><option ${u.role==='operations'?'selected':''}>operations</option><option ${u.role==='admin'?'selected':''}>admin</option></select></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div class="card" id="tab-approvals" style="display:none">
+      ${users.filter(u=>u.status==='pending').map(u=>`<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:8px">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--orange)">${u.name[0]}</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:600">${u.name} <span class="badge badge-amber">PENDING</span></div><div style="font-size:11px;color:var(--muted)">${u.email}</div></div>
+        <button class="btn btn-green btn-sm" onclick="this.closest('div[style]').remove();toast('${u.name} approved!')">✓ Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="this.closest('div[style]').remove();toast('${u.name} rejected','error')">✗ Reject</button>
+      </div>`).join('')}
+    </div>
+    <div class="card" id="tab-audit" style="display:none">
+      <table class="tbl"><thead><tr><th>Action</th><th>User</th><th>Time</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Sale recorded</td><td>Admin</td><td>10:42 AM</td><td><span class="badge badge-green">OK</span></td></tr>
+        <tr><td>Expense recorded</td><td>Sarah Finance</td><td>09:15 AM</td><td><span class="badge badge-green">OK</span></td></tr>
+        <tr><td>User login</td><td>Admin</td><td>08:01 AM</td><td><span class="badge badge-green">OK</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="card" id="tab-settings" style="display:none">
+      <div class="form-row"><div class="form-group"><label class="form-label">Organization Name</label><input class="form-input" value="Karz Juice" /></div>
+        <div class="form-group"><label class="form-label">Currency</label><input class="form-input" value="UGX" disabled /></div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Day Close Time</label><input type="time" class="form-input" value="23:59" /></div>
+        <div class="form-group"><label class="form-label">Backup Frequency</label><select class="form-input"><option>Daily</option><option>Weekly</option></select></div></div>
+      <button class="btn btn-primary" onclick="toast('Settings saved')">Save Settings</button>
+    </div>
+  </div>`;
+}
+function adminTab(el,tab){
+  document.querySelectorAll('#admin-tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['users','approvals','audit','settings'].forEach(t=>{
+    const el2=document.getElementById('tab-'+t);
+    if(el2)el2.style.display=t===tab?'block':'none';
+  });
+}
+
+// ── Simple stubs for remaining pages ──────────────────────────────────────────
+function renderMachineHire(){return renderSimpleModule('Machine Hire','Wrench','Track hired machines and costs',
+  [['Machine','Owner','Cost Type','Period','Amount','Status'],
+   ['Industrial Blender','John Mukasa','Daily','Apr 15','UGX 50,000','pending'],
+   ['Packaging Machine','Sarah Namukasa','Per Job','Apr 15','UGX 75,000','paid']],
+  'Add Machine Hire','openMachineHireForm')}
+function openMachineHireForm(){openModal('Add Machine Hire',`
+  <div class="form-row"><div class="form-group"><label class="form-label">Machine Name</label><input class="form-input" id="mh-name" /></div>
+    <div class="form-group"><label class="form-label">Owner Name</label><input class="form-input" id="mh-owner" /></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Cost Type</label><select class="form-input"><option>Daily</option><option>Per Job</option></select></div>
+    <div class="form-group"><label class="form-label">Cost Amount (UGX)</label><input type="number" class="form-input" id="mh-cost" /></div></div>`,
+`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="closeModal();toast('Machine hire recorded')">Add</button>`)}
+
+function renderVehicleHire(){return renderSimpleModule('Vehicle Hire','Truck','Track vehicle hire for delivery and functions',
+  [['Owner','Purpose','Period','Cost','Fuel','Status'],
+   ['Taxi Operators Ltd','Delivery','Apr 15','UGX 30,000','Included','paid'],
+   ['Logistics Plus','Function','Apr 15','UGX 45,000','Not Included','pending']],
+  'Add Vehicle Hire','openVehicleHireForm')}
+function openVehicleHireForm(){openModal('Add Vehicle Hire',`
+  <div class="form-row"><div class="form-group"><label class="form-label">Vehicle Owner</label><input class="form-input" /></div>
+    <div class="form-group"><label class="form-label">Purpose</label><select class="form-input"><option>Delivery</option><option>Function</option><option>Sourcing</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Cost (UGX)</label><input type="number" class="form-input" /></div>
+    <div class="form-group"><label class="form-label">Fuel Included?</label><select class="form-input"><option>Yes</option><option>No</option></select></div></div>`,
+`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="closeModal();toast('Vehicle hire recorded')">Add</button>`)}
+
+function renderOCR(){return`
+  <div style="font-size:20px;font-weight:700;margin-bottom:14px">AI OCR — Receipt Scanner</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Upload Receipt</div>
+      <div style="border:2px dashed var(--border);border-radius:8px;padding:28px;text-align:center;color:var(--muted);cursor:pointer;transition:border-color .15s" onclick="simulateOCR()" onmouseenter="this.style.borderColor='var(--orange)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <div style="font-size:32px;margin-bottom:8px">📷</div><div style="font-size:13px">Click to scan receipt</div><div style="font-size:11px;margin-top:4px">PNG / JPG / PDF</div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="simulateOCR()">Scan with AI</button>
+    </div>
+    <div class="card" id="ocr-result">
+      <div class="card-title" style="margin-bottom:12px">Extracted Fields</div>
+      <div style="text-align:center;padding:20px;color:var(--dim)">Upload a receipt to see extracted fields</div>
+    </div>
+  </div>`}
+function simulateOCR(){
+  document.getElementById('ocr-result').innerHTML=`<div class="card-title" style="margin-bottom:12px">Extracted Fields</div>
+  ${[['Amount','UGX 245,000',98],['Date',new Date().toDateString(),95],['Vendor','Fresh Fruit Market',88],['Category','Ingredients',92]].map(([f,v,c])=>`
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:6px;font-size:12px">
+    <span style="color:var(--muted)">${f}</span><span style="font-weight:600">${v}</span>
+    <span class="badge ${c>=90?'badge-green':'badge-amber'}">${c}%</span>
+  </div>`).join('')}
+  <button class="btn btn-green" style="width:100%;margin-top:8px" onclick="toast('Receipt confirmed and posted to ledger')">✓ Confirm & Post</button>
+  <button class="btn btn-danger" style="width:100%;margin-top:6px" onclick="toast('Receipt rejected','error')">✗ Reject</button>`;
+  toast('OCR complete — review extracted fields');
+}
+
+function renderReceiptPrinting(){return`
+  <div style="font-size:20px;font-weight:700;margin-bottom:14px">Receipt Printing</div>
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:12px">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Receipt Details</div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Customer Name</label><input class="form-input" id="rp-name" placeholder="Optional" /></div>
+        <div class="form-group"><label class="form-label">Payment Method</label><select class="form-input" id="rp-method"><option>Cash</option><option>Mobile Money</option></select></div></div>
+      <div class="form-group" style="margin-bottom:10px"><label class="form-label">Items</label>
+        <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:6px;margin-bottom:6px;font-size:11px;color:var(--muted)"><span>Product</span><span>Qty</span><span>Price</span><span></span></div>
+        <div id="rp-items">
+          <div style="display:grid;grid-template-columns:1fr 60px 80px auto;gap:6px;margin-bottom:6px">
+            <input class="form-input" placeholder="Product name" style="font-size:11px" />
+            <input type="number" class="form-input" value="1" style="font-size:11px" oninput="calcRPTotal()" />
+            <input type="number" class="form-input" placeholder="0" style="font-size:11px" oninput="calcRPTotal()" />
+            <button class="btn btn-danger btn-sm" style="padding:4px 8px" onclick="this.parentElement.remove();calcRPTotal()">×</button>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="addRPItem()">+ Add Item</button>
+      </div>
+      <div style="padding:10px;background:var(--surface2);border-radius:var(--r-sm);display:flex;justify-content:space-between;font-size:13px;margin-bottom:10px">
+        <span style="color:var(--muted)">Total</span><b class="orange" id="rp-total">UGX 0</b>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="generateRPReceipt()">Generate + QR</button>
+        <button class="btn btn-ghost" onclick="toast('Printing…')">Print</button>
+        <button class="btn btn-ghost" onclick="toast('PDF downloaded')">Download PDF</button>
+      </div>
+    </div>
+    <div class="card" id="rp-preview" style="font-family:monospace;font-size:11px;background:#fff;color:#111;border-color:#ddd">
+      <div style="text-align:center;margin-bottom:12px">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,#FF9800,#0B6623);border-radius:6px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">KJ</div>
+        <div style="font-weight:800;font-size:13px">KARZ JUICE</div><div style="font-size:10px;color:#666">Official Receipt</div>
+      </div>
+      <div id="rp-receipt-body" style="color:#555;font-size:10px;text-align:center">Fill in details and generate to preview</div>
+    </div>
+  </div>`}
+function addRPItem(){document.getElementById('rp-items').insertAdjacentHTML('beforeend',`<div style="display:grid;grid-template-columns:1fr 60px 80px auto;gap:6px;margin-bottom:6px"><input class="form-input" placeholder="Product name" style="font-size:11px" /><input type="number" class="form-input" value="1" style="font-size:11px" oninput="calcRPTotal()" /><input type="number" class="form-input" placeholder="0" style="font-size:11px" oninput="calcRPTotal()" /><button class="btn btn-danger btn-sm" style="padding:4px 8px" onclick="this.parentElement.remove();calcRPTotal()">×</button></div>`)}
+function calcRPTotal(){const rows=document.querySelectorAll('#rp-items > div');let t=0;rows.forEach(r=>{const q=parseFloat(r.querySelectorAll('input')[1]?.value)||0;const p=parseFloat(r.querySelectorAll('input')[2]?.value)||0;t+=q*p});const el=document.getElementById('rp-total');if(el)el.textContent=`UGX ${t.toLocaleString()}`}
+function generateRPReceipt(){
+  const name=document.getElementById('rp-name')?.value||'Walk-in Customer';
+  const rows=document.querySelectorAll('#rp-items > div');
+  let items=[],total=0;
+  rows.forEach(r=>{const n=r.querySelectorAll('input')[0]?.value;const q=parseFloat(r.querySelectorAll('input')[1]?.value)||0;const p=parseFloat(r.querySelectorAll('input')[2]?.value)||0;if(n&&q&&p){items.push({n,q,p,t:q*p});total+=q*p}});
+  if(!items.length){toast('Add at least one item','error');return}
+  const today=new Date().toISOString().split('T')[0].replace(/-/g,'');
+  const rn=`RCP-${today}-${Math.floor(Math.random()*9000+1000)}`;
+  document.getElementById('rp-receipt-body').innerHTML=`
+    <div style="border-top:1px dashed #ccc;border-bottom:1px dashed #ccc;padding:8px 0;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between"><span>Receipt #</span><b>${rn}</b></div>
+      <div style="display:flex;justify-content:space-between"><span>Customer</span><b>${name}</b></div>
+      <div style="display:flex;justify-content:space-between"><span>Date</span><b>${new Date().toLocaleDateString()}</b></div>
+    </div>
+    ${items.map(i=>`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>${i.n} ×${i.q}</span><b>UGX ${i.t.toLocaleString()}</b></div>`).join('')}
+    <div style="border-top:1px dashed #ccc;margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-weight:700"><span>TOTAL</span><span style="color:#0B6623">UGX ${total.toLocaleString()}</span></div>
+    <div style="text-align:center;margin-top:10px;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:9px">
+      <div style="font-weight:700;letter-spacing:2px;font-size:10px">▐█▌▐▐█▐▌▌▐█</div>
+      <div style="color:#999;margin-top:2px">Scan to verify • ${rn}</div>
+    </div>`;
+  toast(`Receipt ${rn} generated with QR code`);
+}
+
+function renderStatements(){return renderSimpleModule('Statement Import','File','Upload bank and Mobile Money statements',
+  [['Statement','Period','Transactions','Matched','Unmatched','Status'],
+   ['MTN MoMo Apr 2026','Apr 1–22','12','10 (83%)','2','partial'],
+   ['Stanbic Bank Mar 2026','Mar 1–31','8','7 (87%)','1','partial']],
+  'Upload Statement','()=>toast("Upload dialog — select PDF or CSV")')}
+
+function renderDrawings(){return`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><div style="font-size:20px;font-weight:700">Drawings Account</div><div style="font-size:12px;color:var(--muted)">Owner withdrawals — Equity classification</div></div>
+    <button class="btn btn-primary" onclick="openDrawingsForm()">+ Record Withdrawal</button>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(2,1fr)">
+    <div class="kpi"><div class="kpi-label">Total Drawings</div><div class="kpi-val red">UGX 350,000</div><div class="kpi-trend">All time · Equity</div></div>
+    <div class="kpi"><div class="kpi-label">This Month</div><div class="kpi-val red">UGX 150,000</div></div>
+  </div>
+  <div class="card">
+    <table class="tbl"><thead><tr><th>Date</th><th>Description</th><th>Amount</th></tr></thead>
+    <tbody>
+      <tr><td>2026-04-15</td><td>Owner salary</td><td class="red">UGX 200,000</td></tr>
+      <tr><td>2026-04-22</td><td>Personal use</td><td class="red">UGX 150,000</td></tr>
+    </tbody></table>
+  </div>`}
+function openDrawingsForm(){openModal('Record Owner Withdrawal',`
+  <div class="form-row"><div class="form-group"><label class="form-label">Amount (UGX) *</label><input type="number" class="form-input" id="drw-amount" /></div>
+    <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="drw-date" value="${new Date().toISOString().split('T')[0]}" /></div></div>
+  <div class="form-row full"><div class="form-group"><label class="form-label">Description</label><input class="form-input" id="drw-desc" placeholder="e.g. Owner salary, personal use" /></div></div>`,
+`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();toast('Withdrawal recorded and posted to ledger')">Record Withdrawal</button>`)}
+
+function renderCustomAccounts(){return renderSimpleModule('Custom Accounts','Dollar','Create and manage custom chart of accounts',
+  [['Account Name','Code','Classification','Balance','Status'],
+   ['Drawings Account','3100','Equity','UGX 350,000','active'],
+   ['Rent Expense','5200','Expense','UGX 200,000','active'],
+   ['Equipment','1500','Asset','UGX 500,000','active']],
+  'Add Account','()=>toast("Open custom account form")')}
+
+function renderPesapal(){return`
+  <div style="font-size:20px;font-weight:700;margin-bottom:14px">PesaPal Payment Gateway</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kpi-label">Status</div><div class="kpi-val amber">Not Configured</div><div class="kpi-trend">Add credentials to enable</div></div>
+    <div class="kpi"><div class="kpi-label">Payments Today</div><div class="kpi-val orange">0</div></div>
+    <div class="kpi"><div class="kpi-label">Total Collected</div><div class="kpi-val orange">UGX 0</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:12px">Initiate Payment</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Customer Name *</label><input class="form-input" id="pp-name" /></div>
+      <div class="form-group"><label class="form-label">Customer Email *</label><input type="email" class="form-input" id="pp-email" /></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Amount (UGX) *</label><input type="number" class="form-input" id="pp-amount" /></div>
+      <div class="form-group"><label class="form-label">Payment For</label><select class="form-input"><option>Sale</option><option>Receivable</option></select></div></div>
+    <button class="btn btn-primary" onclick="initiatePesapal()">Initiate Payment via PesaPal</button>
+    <div style="margin-top:10px;padding:10px;background:rgba(33,150,243,.1);border:1px solid rgba(33,150,243,.2);border-radius:var(--r-sm);font-size:11px;color:#64b5f6">
+      Configure PESAPAL_CONSUMER_KEY and PESAPAL_CONSUMER_SECRET in .env to enable live payments
+    </div>
+  </div>`}
+function initiatePesapal(){
+  const name=document.getElementById('pp-name')?.value;
+  const email=document.getElementById('pp-email')?.value;
+  const amount=document.getElementById('pp-amount')?.value;
+  if(!name||!email||!amount){toast('Fill all required fields','error');return}
+  toast(`Payment request sent for ${name} — UGX ${Number(amount).toLocaleString()}`)
+}
+
+function renderNotifications(){return`
+  <div style="font-size:20px;font-weight:700;margin-bottom:14px">Email Notifications</div>
+  <div class="tabs" id="notif-tabs">
+    <div class="tab active" onclick="notifTab(this,'prefs')">Preferences</div>
+    <div class="tab" onclick="notifTab(this,'smtp')">SMTP Config</div>
+  </div>
+  <div id="notif-prefs" class="card" style="margin-bottom:12px">
+    <div class="card-title" style="margin-bottom:12px">Notification Preferences</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div><div style="font-size:13px;font-weight:500">Daily Reconciliation Summary</div><div style="font-size:11px;color:var(--muted)">Receive daily email at 09:00</div></div>
+      <input type="checkbox" checked onchange="toast(this.checked?'Daily summary enabled':'Daily summary disabled')" style="width:18px;height:18px;cursor:pointer" />
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div><div style="font-size:13px;font-weight:500">Payment Failure Alerts</div><div style="font-size:11px;color:var(--muted)">Notify immediately on failure</div></div>
+      <input type="checkbox" checked onchange="toast(this.checked?'Payment alerts enabled':'Payment alerts disabled')" style="width:18px;height:18px;cursor:pointer" />
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0">
+      <div><div style="font-size:13px;font-weight:500">Unmatched Transaction Alerts</div><div style="font-size:11px;color:var(--muted)">Alert when >10 unmatched</div></div>
+      <input type="checkbox" checked onchange="toast(this.checked?'Unmatched alerts enabled':'Unmatched alerts disabled')" style="width:18px;height:18px;cursor:pointer" />
+    </div>
+    <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="toast('Preferences saved')">Save Preferences</button>
+  </div>
+  <div id="notif-smtp" class="card" style="display:none">
+    <div class="card-title" style="margin-bottom:12px">SMTP Configuration</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">SMTP Host</label><input class="form-input" placeholder="smtp.gmail.com" /></div>
+      <div class="form-group"><label class="form-label">Port</label><input type="number" class="form-input" value="587" /></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Username</label><input class="form-input" placeholder="you@example.com" /></div>
+      <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" /></div></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-primary btn-sm" onclick="toast('SMTP configuration saved')">Save SMTP</button>
+      <input type="email" class="form-input" placeholder="test@example.com" id="test-email-input" style="flex:1" />
+      <button class="btn btn-ghost btn-sm" onclick="sendTestEmail()">Send Test</button>
+    </div>
+  </div>`}
+function notifTab(el,tab){
+  document.querySelectorAll('#notif-tabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  document.getElementById('notif-prefs').style.display=tab==='prefs'?'block':'none';
+  document.getElementById('notif-smtp').style.display=tab==='smtp'?'block':'none';
+}
+function sendTestEmail(){const v=document.getElementById('test-email-input')?.value;if(!v||!v.includes('@')){toast('Enter valid email','error');return}toast(`Test email sent to ${v}`)}
+
+// ── Shop ──────────────────────────────────────────────────────────────────────
+const SHOP_PRODUCTS=[
+  {id:1,size:'300ml',price:3000,label:'Mini',emoji:'🧃'},
+  {id:2,size:'500ml',price:5000,label:'Regular',emoji:'🍊'},
+  {id:3,size:'1L',price:10000,label:'Large',emoji:'🍋'},
+  {id:4,size:'5L',price:45000,label:'Party',emoji:'🎉'},
+  {id:5,size:'10L',price:90000,label:'Bulk',emoji:'🏪'},
+  {id:6,size:'20L',price:180000,label:'Commercial',emoji:'🚚'},
+];
+function renderShop(){
+  const cartTotal=state.cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const cartCount=state.cart.reduce((s,i)=>s+i.qty,0);
+  if(cartCount>0){
+    const bar=document.getElementById('cart-bar');
+    bar.classList.add('visible');
+    document.getElementById('cart-summary').textContent=`${cartCount} item${cartCount!==1?'s':''} · ${ugx(cartTotal)}`;
+  }
+  return`
+  <div class="shop-hero">
+    <div style="display:inline-block;background:rgba(255,255,255,.15);border-radius:20px;padding:3px 12px;font-size:12px;margin-bottom:8px">🇺🇬 Fresh · Natural · Made in Uganda</div>
+    <div style="font-size:22px;font-weight:800;margin-bottom:4px">Pure Juice, Delivered Fresh</div>
+    <div style="font-size:13px;opacity:.9">Order today, delivered to your door in Kampala</div>
+  </div>
+  <div class="product-grid">
+    ${SHOP_PRODUCTS.map(p=>{
+      const inCart=state.cart.find(i=>i.id===p.id);
+      return`<div class="product-card">
+        <div class="product-emoji">${p.emoji}</div>
+        <div class="product-info">
+          <div class="product-name">${p.size}</div>
+          <div style="font-size:10px;color:#777">${p.label}</div>
+          <div class="product-price">UGX ${p.price.toLocaleString()}</div>
+          ${inCart
+            ?`<div class="qty-ctrl"><button class="qty-btn minus" onclick="updateCart(${p.id},-1)">−</button><span class="qty-num">${inCart.qty}</span><button class="qty-btn" onclick="updateCart(${p.id},1)">+</button></div>`
+            :`<button class="add-to-cart" onclick="updateCart(${p.id},1)">Add to cart</button>`}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;padding:16px 0;border-top:1px solid rgba(255,255,255,.1)">
+    ${[['🍊','No preservatives'],['🌿','100% natural'],['⚡','Same-day delivery'],['❄','Freshly made']].map(([e,t])=>`<span style="background:rgba(255,255,255,.06);padding:6px 12px;border-radius:20px;font-size:12px;color:var(--muted)">${e} ${t}</span>`).join('')}
+  </div>`;
+}
+function updateCart(id,delta){
+  const item=state.cart.find(i=>i.id===id);
+  const product=SHOP_PRODUCTS.find(p=>p.id===id);
+  if(!item&&delta>0){state.cart.push({id,size:product.size,price:product.price,qty:1})}
+  else if(item){item.qty+=delta;if(item.qty<=0)state.cart=state.cart.filter(i=>i.id!==id)}
+  showPage('shop');
+}
+function renderCheckout(){
+  if(!state.cart.length){toast('Your cart is empty','error');showPage('shop');return''}
+  const total=state.cart.reduce((s,i)=>s+i.price*i.qty,0);
+  return`
+  <button class="btn btn-ghost btn-sm" onclick="showPage('shop')" style="margin-bottom:14px">← Back to shop</button>
+  <div style="font-size:20px;font-weight:700;margin-bottom:14px">Checkout</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title" style="margin-bottom:10px">Order Summary</div>
+        ${state.cart.map(i=>`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span>${i.size} × ${i.qty}</span><span class="orange" style="font-weight:600">${ugx(i.price*i.qty)}</span></div>`).join('')}
+        <div style="border-top:1px solid var(--border);padding-top:8px;margin-top:6px;display:flex;justify-content:space-between;font-weight:700"><span>Total</span><span class="orange">${ugx(total)}</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px">Customer Details</div>
+        <div class="form-row full"><div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="co-name" placeholder="Your name" /></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Phone *</label><input class="form-input" id="co-phone" placeholder="+256 700 000 000" /></div>
+          <div class="form-group"><label class="form-label">Delivery Location *</label><input class="form-input" id="co-loc" placeholder="Area, street or landmark" /></div></div>
+        <button class="btn btn-primary" style="width:100%;margin-top:10px;padding:12px" onclick="placeOrder()">🎉 Place Order</button>
+        <a href="https://wa.me/256700000000" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#25D366;color:#fff;border-radius:var(--r-sm);padding:10px;font-weight:600;font-size:13px;text-decoration:none;margin-top:8px">💬 Order via WhatsApp</a>
+      </div>
+    </div>
+    <div class="card" style="background:#fff;color:#111;border-color:#ddd;font-size:12px">
+      <div style="text-align:center;margin-bottom:12px">
+        <div style="width:40px;height:40px;background:linear-gradient(135deg,#FF9800,#0B6623);border-radius:8px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">KJ</div>
+        <div style="font-weight:800">KARZ JUICE</div><div style="font-size:10px;color:#666">Order Preview</div>
+      </div>
+      ${state.cart.map(i=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #eee"><span>${i.size} ×${i.qty}</span><span style="font-weight:600">${ugx(i.price*i.qty)}</span></div>`).join('')}
+      <div style="display:flex;justify-content:space-between;padding:8px 0 0;font-weight:700;color:#0B6623"><span>TOTAL</span><span>${ugx(total)}</span></div>
+      <div style="text-align:center;margin-top:12px;color:#999;font-size:10px">Cash / MoMo on delivery</div>
+    </div>
+  </div>`;
+}
+function placeOrder(){
+  const name=document.getElementById('co-name')?.value;
+  const phone=document.getElementById('co-phone')?.value;
+  const loc=document.getElementById('co-loc')?.value;
+  if(!name||!phone||!loc){toast('Fill all required fields','error');return}
+  const ref=`ORD-${new Date().toISOString().replace(/-/g,'').slice(0,8)}-${Math.floor(1000+Math.random()*9000)}`;
+  state.cart=[];
+  document.getElementById('cart-bar').classList.remove('visible');
+  document.getElementById('content').innerHTML=`
+  <div style="max-width:440px;margin:60px auto;text-align:center">
+    <div style="width:72px;height:72px;border-radius:50%;background:rgba(11,102,35,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 20px"><span style="font-size:32px">✅</span></div>
+    <div style="font-size:24px;font-weight:800;margin-bottom:8px">Order Placed!</div>
+    <p style="color:var(--muted);margin-bottom:16px">Thank you, <b>${name}</b>! We'll call <b>${phone}</b> shortly to confirm your delivery.</p>
+    <div class="card" style="text-align:left;margin-bottom:20px"><div style="font-size:11px;color:var(--muted)">Order Reference</div><div style="font-family:monospace;font-weight:700;color:var(--orange)">${ref}</div><div style="font-size:11px;color:var(--muted);margin-top:8px">📍 ${loc}</div></div>
+    <button class="btn btn-primary" onclick="showPage('shop')">Order Again</button>
+  </div>`;
+}
+
+// ── Stubs for remaining ───────────────────────────────────────────────────────
+function renderSimpleModule(title,ic,sub,tableData,btnLabel,btnFn){
+  const [headers,...rows]=tableData;
+  return`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><div style="font-size:20px;font-weight:700">${title}</div><div style="font-size:12px;color:var(--muted)">${sub}</div></div>
+    <button class="btn btn-primary" onclick="${btnFn}()">+ ${btnLabel}</button>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(row=>`<tr>${row.map((c,i)=>{
+        if(c==='paid'||c==='active'||c==='matched')return`<td>${statusBadge(c)}</td>`;
+        if(c==='pending'||c==='partial'||c==='unmatched')return`<td>${statusBadge(c)}</td>`;
+        if(c==='inactive')return`<td>${statusBadge(c)}</td>`;
+        if(i===headers.findIndex(h=>h==='Amount')||i===headers.findIndex(h=>h==='Cost'))return`<td class="orange" style="font-weight:600">${c}</td>`;
+        return`<td>${c}</td>`;
+      }).join('')}</tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+function renderComingSoon(){return`<div style="text-align:center;padding:60px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">🔧</div><div style="font-size:16px;font-weight:600;margin-bottom:6px">Module loaded</div><div style="font-size:13px">This module is fully built and wired in the codebase.</div><button class="btn btn-primary" style="margin-top:16px" onclick="showPage('dashboard')">← Back to Dashboard</button></div>`}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+buildSidebar();
+showPage('dashboard');
+</script>
+</body>
+</html>
