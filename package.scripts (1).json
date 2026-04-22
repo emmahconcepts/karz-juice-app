@@ -1,0 +1,38 @@
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "start": "node dist/server/index.js",
+    "preview": "vite preview",
+
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage",
+
+    "test:api": "vitest run tests/api.test.ts",
+    "test:api:watch": "vitest watch tests/api.test.ts",
+
+    "test:packages": "vitest run server/packages.test.ts",
+    "test:receipts": "vitest run server/receipts.test.ts",
+    "test:search": "vitest run server/search.test.ts",
+    "test:delete-audit": "vitest run server/delete-audit.test.ts",
+
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+
+    "test:performance": "k6 run tests/performance.k6.js",
+    "test:performance:local": "k6 run -e BASE_URL=http://localhost:3000 tests/performance.k6.js",
+    "test:performance:100users": "k6 run -e BASE_URL=http://localhost:3000 --vus 100 --duration 10m tests/performance.k6.js",
+
+    "test:qa-report": "ts-node tests/qa-report-generator.ts",
+
+    "test:all": "pnpm run test && pnpm run test:api && pnpm run test:packages && pnpm run test:receipts && pnpm run test:search && pnpm run test:delete-audit",
+    "test:ci": "pnpm run test:all && pnpm run test:e2e",
+
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio"
+  }
+}
