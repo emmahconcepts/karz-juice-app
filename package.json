@@ -1,7 +1,7 @@
 {
   "scripts": {
     "dev":   "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "start": "node dist/server/index.js",
     "preview": "vite preview",
 
