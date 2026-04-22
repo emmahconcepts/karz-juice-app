@@ -1,37 +1,54 @@
 {
+  "name": "karz-juice-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev":   "vite",
+    "dev": "vite",
     "build": "vite build",
     "start": "node dist/server/index.js",
     "preview": "vite preview",
-
-    "test":            "vitest run",
-    "test:watch":      "vitest watch",
-    "test:coverage":   "vitest run --coverage",
-    "test:api":        "vitest run tests/api.test.ts",
-    "test:api:watch":  "vitest watch tests/api.test.ts",
-
-    "test:packages":     "vitest run server/packages.test.ts",
-    "test:receipts":     "vitest run server/receipts.test.ts",
-    "test:search":       "vitest run server/search.test.ts",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage",
+    "test:api": "vitest run tests/api.test.ts",
+    "test:api:watch": "vitest watch tests/api.test.ts",
+    "test:packages": "vitest run server/packages.test.ts",
+    "test:receipts": "vitest run server/receipts.test.ts",
+    "test:search": "vitest run server/search.test.ts",
     "test:delete-audit": "vitest run server/delete-audit.test.ts",
-    "test:mtn":          "vitest run server/mtn.test.ts",
-    "test:customer":     "vitest run server/customer-portal.test.ts",
-
-    "test:e2e":         "playwright test",
-    "test:e2e:ui":      "playwright test --ui",
-    "test:e2e:headed":  "playwright test --headed",
-
-    "test:performance":       "k6 run tests/performance.k6.js",
+    "test:mtn": "vitest run server/mtn.test.ts",
+    "test:customer": "vitest run server/customer-portal.test.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:performance": "k6 run tests/performance.k6.js",
     "test:performance:local": "k6 run -e BASE_URL=http://localhost:3000 tests/performance.k6.js",
-    "test:performance:100u":  "k6 run -e BASE_URL=http://localhost:3000 --vus 100 --duration 10m tests/performance.k6.js",
-
+    "test:performance:100u": "k6 run -e BASE_URL=http://localhost:3000 --vus 100 --duration 10m tests/performance.k6.js",
     "test:qa-report": "ts-node tests/qa-report-generator.ts",
-    "test:all":       "pnpm run test && pnpm run test:api && pnpm run test:packages && pnpm run test:receipts && pnpm run test:search && pnpm run test:delete-audit && pnpm run test:mtn",
-    "test:ci":        "pnpm run test:all && pnpm run test:e2e",
-
-    "db:push":     "drizzle-kit push",
+    "test:all": "pnpm run test && pnpm run test:api && pnpm run test:packages && pnpm run test:receipts && pnpm run test:search && pnpm run test:delete-audit && pnpm run test:mtn",
+    "test:ci": "pnpm run test:all && pnpm run test:e2e",
+    "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
-    "db:studio":   "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "express": "^4.18.2",
+    "drizzle-orm": "^0.29.0",
+    "postgres": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@types/express": "^4.17.21",
+    "@vitejs/plugin-react": "^4.2.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0",
+    "ts-node": "^10.9.1",
+    "drizzle-kit": "^0.20.0",
+    "@playwright/test": "^1.40.0"
   }
 }
